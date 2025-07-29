@@ -30,6 +30,7 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(backgroundColor: AppColors.backgroundColor),
       body: Center(
         child: Padding(
@@ -71,19 +72,48 @@ class _SignupPageState extends State<SignupPage> {
                     SizedBox(
                       width: double.infinity,
                       height: 50,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (formKey.currentState!.validate()) {
-                            context.read<AuthBloc>().add(
-                              AuthSignup(
-                                email: emailController.text.trim(),
-                                name: nameController.text.trim(),
-                                password: passwordController.text.trim(),
+                      child: BlocConsumer<AuthBloc, AuthState>(
+                        listener: (context, state) {
+                          if (state is AuthFailure) {
+                            ScaffoldMessenger.of(context)
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    state.messgae.toString(),
+                                  ), // ✅ fixed typo
+                                ),
+                              );
+                          }
+                          if (state is AuthSuccess) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (builder) => LoginPage(),
                               ),
                             );
                           }
                         },
-                        child: Text("Sign Up"),
+                        builder: (context, state) {
+                          if (state is AuthLoading) {
+                            return Center(child: CircularProgressIndicator());
+                          }
+
+                          return ElevatedButton(
+                            onPressed: () {
+                              if (formKey.currentState!.validate()) {
+                                context.read<AuthBloc>().add(
+                                  AuthSignup(
+                                    email: emailController.text.trim(),
+                                    name: nameController.text.trim(),
+                                    password: passwordController.text.trim(),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Text("Sign Up"),
+                          );
+                        },
                       ),
                     ),
                     SizedBox(height: 20),

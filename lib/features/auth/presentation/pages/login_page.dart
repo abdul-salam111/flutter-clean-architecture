@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_clean_architecture/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:flutter_clean_architecture/features/auth/presentation/pages/signup_page.dart';
 import 'package:flutter_clean_architecture/features/auth/presentation/widgets/text_formfield.dart';
+import 'package:flutter_clean_architecture/features/home/presentation/pages/home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -57,20 +60,55 @@ class _LoginPageState extends State<LoginPage> {
                           p0!.isEmpty ? "Please, enter your passwrord" : null,
                     ),
                     SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (formKey.currentState!.validate()) {}
-                        },
-                        child: Text("Sign In"),
-                      ),
+                    BlocConsumer<AuthBloc, AuthState>(
+                      listener: (context, state) {
+                        if (state is AuthFailure) {
+                          ScaffoldMessenger.of(context)
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              SnackBar(content: Text(state.messgae.toString())),
+                            );
+                        }
+                        if (state is AuthSuccess) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (builder) => HomePage()),
+                          );
+                        }
+                      },
+
+                      
+                      builder: (context, state) {
+                        if (state is AuthLoading) {
+                          return Center(child: CircularProgressIndicator());
+                        }
+
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (formKey.currentState!.validate()) {
+                                context.read<AuthBloc>().add(
+                                  AuthSignIn(
+                                    email: emailController.text.trim(),
+                                    password: passwordController.text.trim(),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Text("Sign In"),
+                          ),
+                        );
+                      },
                     ),
                     SizedBox(height: 20),
                     GestureDetector(
-                      onTap: (){
-                        Navigator.push(context, MaterialPageRoute(builder: (builder)=>SignupPage()));
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (builder) => SignupPage()),
+                        );
                       },
                       child: Text.rich(
                         TextSpan(
